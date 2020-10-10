@@ -2,121 +2,130 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-//  SIMULATION DESCRIPTION:	A basic sequence detector of which buttons are pressed. If the 
+//   PROJECT DESCRIPTION:	A basic sequence detector of which buttons are pressed. If the 
 //							correct sequence is detected and the unlock switch goes high,
-// 							a blue LED will light, if not, the red LED will light. There
+// 							a blue LED will light, and a 362 Hz tone will sound. If not, 
+//					        the red LED will light, and a 110 Hz tone will sound. There
 //                          is no overlap. The buttons I am using are 4 buttons built into
 //                          the Arty z7-10 board.
 //
-//                          The correct sequence is BTN2, BTN3, BTN1, BTN1
+//                          The enter sequence is BTN2, BTN3, BTN1, BTN3
 //
-//	            FILENAME:   button_detect_tb.v
+//	            FILENAME:   button_detect.v
 //	             VERSION:   1.0  10/08/2020
 //                AUTHOR:   Dominic Meads
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 
-module tb;
+module button_detect_tb;
 	reg clk;         // 125 MHz
 	reg [3:1] BTN;   // 4 buttons on Arty Z7-10: BTN3; BTN2; BTN1; BTN0. The first 3 are the sequence regs
 	reg clr_n;       // ACTIVE LOW clear/reset
-	reg correct;     // press to see if sequence is correct (BTN0)
+	reg enter;       // press to see if sequence is correct (BTN0)
 	wire blue;       // sequence correct
 	wire red;        // sequnce incorrect
+	wire tone_EN362; // enables 362 Hz tone
+	wire tone_EN110; //enables 110 Hz tone
 	
 	always #4 clk = ~clk;  // 8 ns period
 	
-	button_detect uut(clk,BTN,clr_n,correct,blue,red);
+	button_detect uut(clk,BTN,clr_n,enter,blue,red,tone_EN362,tone_EN110);
+	
+	/* IMPORTANT: to reduce simulation time, take counter values of rLED_time and bLED_time in uut and reduce by a factor 
+	   of 100. Also reduce the comparison factors from 125000000 to 1250000 in the INDICATEr and INDICATEb blocks 
+	   
+	   MAKE SURE TO CHANGE BACK BEFORE GENERATING BITSTREAM!!!!!!!!!!!!*/
 	
 	
 	/* task for button pressing, in the constraints file, buttons 3, 2, and 1 will be mapped to their respective buttons on the arty board.
-	   Button 0 will be mapped to the "correct" input so a button_press task on button 0 will manipulated the global register "correct" */
+	   Button 0 will be mapped to the "enter" input so a button_press task on button 0 will manipulated the global register "enter" */
 	task button_press;  // note (no bounce simulated on button)
 		input integer i;
 			begin
 				if (i == 0)
 					begin 
-						correct = 1'b1;
-						#20 // 20 ns is very short, just for simulation purposes, make longer for a more accurrate simulation
-						correct = 1'b0;
+						enter = 1'b1;
+						#2500000 // 2.5 ms pulse simulating a single button press
+						enter = 1'b0;
 					end  // if (i == 0)
 				else  // if i = 1, 2, or 3
 					begin 
 						BTN[i] = 1'b1;
-						#20  
+						#2500000   
 						BTN[i] = 1'b0;
 					end  // else
 			end 
 	endtask
 	
 	
-	// start sim
+	/* start sim (NOTE, to reduce sim time, all times are reduced by a factor of 100, i.e. a 250 ms 
+	   pulse is simulated as a 2.5 ms pulse */
 	initial 
 		begin 
 			clk = 0;
 			BTN = 3'b000;
 			clr_n = 0;     // reset active
-			correct = 0;
-			#200
+			enter = 0;
+			#5000000    // 0.05 seconds
 			clr_n = 1;  // ready to recieve sequence
-			#200
+			#8000000    // 0.08 seconds
 			
 			// input correct sequence
 			button_press(2);
-			#200
+			#8000000
 			button_press(3);
-			#200
+			#8000000
 			button_press(1);
-			#200
+			#8000000
 			button_press(3);
-			#200
+			#8000000
 			button_press(0);  // check if correct, "blue" should be high
-			#200
+			#8000000
 			clr_n = 0; // reset
-			#10000
+			#50000000  // .05 sec
 			clr_n = 1;
-			#200
+			#8000000
 			
 			// input an incorrect sequence
 			button_press(3);
-			#200
+			#8000000
 			button_press(3);
-			#200
+			#8000000
 			button_press(2);
-			#200
+			#8000000
 			button_press(1);
-			#200
+			#8000000
 			button_press(0);  // check if correct, "red" should be high
-			#200
+			#8000000
 			clr_n = 0; // reset
-			#10000
+			#50000000  // .05 sec
 			clr_n = 1;
-			#200
+			#8000000
 			
 			// input another correct sequence
 			button_press(2);
-			#200
+			#8000000
 			button_press(3);
-			#200
+			#8000000
 			button_press(1);
-			#200
+			#8000000
 			button_press(3);
-			#200
+			#8000000
 			button_press(0);  // check if correct, "blue" should be high
-			#200
+			#8000000
 			clr_n = 0; // reset
-			#10000
+			#50000000  // .05 sec
 			clr_n = 1;
-			#200
+			#8000000
 			
 			// check clr_n partway through sequence
-			#10000
+			#50000000  // .05 sec
 			button_press(2);
-			#200
+			#8000000
 			button_press(3);
-			#200
+			#8000000
 			clr_n = 0;  // "STATE" should be in "RESET"
-			#5000
+			#20000000  
 
 			$finish;
 		end  // sim
