@@ -92,3 +92,6 @@ module tone_select(
   assign tone_out = (EN392 & i_392) | (EN110 & i_110);  
   
 endmodule  // tone_select
+        
+
+
