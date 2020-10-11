@@ -17,6 +17,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 
+// uncomment the toneout wire for use with the speaker
 module button_detect_tb;
 	reg clk;         // 125 MHz
 	reg [3:1] BTN;   // 4 buttons on Arty Z7-10: BTN3; BTN2; BTN1; BTN0. The first 3 are the sequence regs
@@ -24,12 +25,12 @@ module button_detect_tb;
 	reg enter;       // press to see if sequence is correct (BTN0)
 	wire blue;       // sequence correct
 	wire red;        // sequnce incorrect
-	wire tone_EN362; // enables 362 Hz tone
-	wire tone_EN110; //enables 110 Hz tone
+	wire toneout;    // output to speaker
 	
 	always #4 clk = ~clk;  // 8 ns period
 	
-	button_detect uut(clk,BTN,clr_n,enter,blue,red,tone_EN362,tone_EN110);
+	// MUST add toneout to port list if simulating speaker
+	button_detect uut(clk,BTN,clr_n,enter,blue,red,toneout);
 	
 	/* IMPORTANT: to reduce simulation time, take counter values of rLED_time and bLED_time in uut and reduce by a factor 
 	   of 100. Also reduce the comparison factors from 125000000 to 1250000 in the INDICATEr and INDICATEb blocks 
@@ -130,3 +131,6 @@ module button_detect_tb;
 			$finish;
 		end  // sim
 endmodule  // tb
+
+
+
