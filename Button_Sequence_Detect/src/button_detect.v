@@ -24,8 +24,7 @@ module button_detect(
 	input enter,            // press to see if sequence is correct(BTN0)
 	output blue,            // sequence entry correct
 	output red,             // sequnce entry incorrect
-	output reg tone_EN362,  // enables 362 Hz tone
-	output reg tone_EN110   // enables 110 Hz tone
+	output toneout          // output for speaker
 	);
 	
 	// states
@@ -172,6 +171,22 @@ module button_detect(
 			endcase  // case (STATE)
 		end  // always @ (STATE, BTN...
 	// end Next-state logic of Moore machine with part of output logic integrated in ////////////////////////////////////////////////
+	
+	
+	// Tone Generation (UNCOMMENT FOR USE) ///////////////////////////////////////////////////////////////////////////////////////////
+	// also uncomment the statements containing tone_EN392 and tone_EN110 in the two always blocks below
+	
+	// tone enables
+	reg tone_EN392 = 0;  // 362 Hz
+	reg tone_EN110 = 0;  // 110 Hz
+	
+	// instantiate tone module
+	tone t0(
+	   .clk(clk),
+	   .EN392(tone_EN392),
+	   .EN110(tone_EN110),
+	   .tone_out(toneout)
+	   );
 		
 		
 	// 2nd part of output logic (relies on the enables of the LEDs) ////////////////////////////////////////////////////////////////
@@ -206,18 +221,18 @@ module button_detect(
 					if (bLED_time <= 124999999)  // led will be high for 125 million counts (low for 1 count @ rLED_time <=0) @ 125 MHz is 1 sec of total counting time
 						begin 
 							bLED_time <= bLED_time + 1;
-							tone_EN362 <= 1;  // enable the 362 Hz tone generation for 1 second
+							tone_EN392 <= 1;  // enable the 362 Hz tone generation for 1 second
 						end  // if (bLED_time...
 					else
 						begin 
 							bLED_time <= 0;
-							tone_EN362 <= 0;  // enable the 362 Hz tone generation
+							tone_EN392 <= 0;  // enable the 362 Hz tone generation
 						end  // else 
 				end  // if (bLED_time_EN)
 			else 
 				begin 
 					bLED_time <= 0;
-					tone_EN362 <= 0;
+					tone_EN392 <= 0;
 				end  // else
 		end  // always
 	// end blue 
@@ -226,7 +241,9 @@ module button_detect(
 	assign red = (rLED_time > 0) ? 1:0;
 	assign blue = (bLED_time > 0) ? 1:0;
 	// end 2nd part of output logic (relies on the enables of the LEDs) //////////////////////////////////////////////////////////////
-	
+		
 endmodule  // button_detect
+
+					
 
 					
