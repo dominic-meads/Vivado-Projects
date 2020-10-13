@@ -175,7 +175,7 @@ module button_detect(
 	
 	// Tone Generation (UNCOMMENT FOR USE) ///////////////////////////////////////////////////////////////////////////////////////////
 	// also uncomment the statements containing tone_EN392 and tone_EN110 in the two always blocks below
-	
+	/*
 	// tone enables
 	reg tone_EN392 = 0;  // 362 Hz
 	reg tone_EN110 = 0;  // 110 Hz
@@ -187,7 +187,7 @@ module button_detect(
 	   .EN110(tone_EN110),
 	   .tone_out(toneout)
 	   );
-		
+	*/	
 		
 	// 2nd part of output logic (relies on the enables of the LEDs) ////////////////////////////////////////////////////////////////
 	// red
@@ -198,18 +198,18 @@ module button_detect(
 					if (rLED_time <= 124999999)  // led will be high for 125 million counts (low for 1 count @ rLED_time <=0) @ 125 MHz is 1 sec of total counting time
 						begin 
 							rLED_time <= rLED_time + 1;
-							tone_EN110 <= 1;  // enable the 110 Hz tone generation for 1 second
+							//tone_EN110 <= 1;  // enable the 110 Hz tone generation for 1 second
 						end  // if (rLED_time...
 					else 
 						begin 
 							rLED_time <= 0;
-							tone_EN110 <= 0;  // disable the 110 Hz tone generation
+							//tone_EN110 <= 0;  // disable the 110 Hz tone generation
 						end  // else 
 				end  // if (rLED_time_EN)
 			else
 				begin 
 					rLED_time <= 0;
-					tone_EN110 <= 0;
+					//tone_EN110 <= 0;
 				end  // else 
 		end  // always 
 	// end red
@@ -221,18 +221,18 @@ module button_detect(
 					if (bLED_time <= 124999999)  // led will be high for 125 million counts (low for 1 count @ rLED_time <=0) @ 125 MHz is 1 sec of total counting time
 						begin 
 							bLED_time <= bLED_time + 1;
-							tone_EN392 <= 1;  // enable the 362 Hz tone generation for 1 second
+							//tone_EN392 <= 1;  // enable the 362 Hz tone generation for 1 second
 						end  // if (bLED_time...
 					else
 						begin 
 							bLED_time <= 0;
-							tone_EN392 <= 0;  // enable the 362 Hz tone generation
+							//tone_EN392 <= 0;  // enable the 362 Hz tone generation
 						end  // else 
 				end  // if (bLED_time_EN)
 			else 
 				begin 
 					bLED_time <= 0;
-					tone_EN392 <= 0;
+					//tone_EN392 <= 0;
 				end  // else
 		end  // always
 	// end blue 
