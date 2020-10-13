@@ -3,9 +3,9 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 //   PROJECT DESCRIPTION:	A basic sequence detector of which buttons are pressed. If the 
-//							correct sequence is detected and the unlock switch goes high,
-// 							a blue LED will light, and a 362 Hz tone will sound. If not, 
-//					        the red LED will light, and a 110 Hz tone will sound. There
+//							correct sequence is detected and the enter switch goes high,
+// 							a blue LED will light, and a 392 Hz tone will sound. If not, 
+//					        the red LED will light, and a 110 Hz tone will sound. There            
 //                          is no overlap. The buttons I am using are 4 buttons built into
 //                          the Arty z7-10 board.
 //
@@ -24,7 +24,7 @@ module button_detect(
 	input enter,            // press to see if sequence is correct(BTN0)
 	output blue,            // sequence entry correct
 	output red,             // sequnce entry incorrect
-	output toneout          // output for speaker
+	output toneout          // output for speaker/buzzers
 	);
 	
 	// states
@@ -38,9 +38,9 @@ module button_detect(
 	
 	// registers
 	reg [2:0] STATE = 0;       // current state
-	reg [26:0] rLED_time = 0;  // keeps the red LED lit for 500 ms
+	reg [26:0] rLED_time = 0;  // keeps the red LED lit for 1000 ms
 	reg rLED_time_EN = 0;      // enable for red LED_time
-	reg [26:0] bLED_time = 0;  // keeps the blue LED lit for 500 ms
+	reg [26:0] bLED_time = 0;  // keeps the blue LED lit for 1000 ms
 	reg bLED_time_EN = 0;      // enable for blue LED_time
 	
 	// Next-state logic of Moore machine with part of output logic integrated in ////////////////////////////////////////////////////
@@ -175,7 +175,7 @@ module button_detect(
 	
 	// Tone Generation (UNCOMMENT FOR USE) ///////////////////////////////////////////////////////////////////////////////////////////
 	// also uncomment the statements containing tone_EN392 and tone_EN110 in the two always blocks below
-	/*
+	
 	// tone enables
 	reg tone_EN392 = 0;  // 362 Hz
 	reg tone_EN110 = 0;  // 110 Hz
@@ -187,7 +187,7 @@ module button_detect(
 	   .EN110(tone_EN110),
 	   .tone_out(toneout)
 	   );
-	*/	
+		
 		
 	// 2nd part of output logic (relies on the enables of the LEDs) ////////////////////////////////////////////////////////////////
 	// red
@@ -197,19 +197,19 @@ module button_detect(
 				begin 
 					if (rLED_time <= 124999999)  // led will be high for 125 million counts (low for 1 count @ rLED_time <=0) @ 125 MHz is 1 sec of total counting time
 						begin 
-							rLED_time <= rLED_time + 1;
-							//tone_EN110 <= 1;  // enable the 110 Hz tone generation for 1 second
+							rLED_time <= rLED_time + 1;  
+							tone_EN110 <= 1;  // enable the 110 Hz tone generation for 1 second
 						end  // if (rLED_time...
 					else 
 						begin 
 							rLED_time <= 0;
-							//tone_EN110 <= 0;  // disable the 110 Hz tone generation
+							tone_EN110 <= 0;  // disable the 110 Hz tone generation
 						end  // else 
 				end  // if (rLED_time_EN)
 			else
 				begin 
 					rLED_time <= 0;
-					//tone_EN110 <= 0;
+					tone_EN110 <= 0;
 				end  // else 
 		end  // always 
 	// end red
@@ -221,18 +221,18 @@ module button_detect(
 					if (bLED_time <= 124999999)  // led will be high for 125 million counts (low for 1 count @ rLED_time <=0) @ 125 MHz is 1 sec of total counting time
 						begin 
 							bLED_time <= bLED_time + 1;
-							//tone_EN392 <= 1;  // enable the 362 Hz tone generation for 1 second
+							tone_EN392 <= 1;  // enable the 362 Hz tone generation for 1 second
 						end  // if (bLED_time...
 					else
 						begin 
 							bLED_time <= 0;
-							//tone_EN392 <= 0;  // enable the 362 Hz tone generation
+							tone_EN392 <= 0;  // enable the 362 Hz tone generation
 						end  // else 
 				end  // if (bLED_time_EN)
 			else 
 				begin 
 					bLED_time <= 0;
-					//tone_EN392 <= 0;
+					tone_EN392 <= 0;
 				end  // else
 		end  // always
 	// end blue 
@@ -244,6 +244,7 @@ module button_detect(
 		
 endmodule  // button_detect
 
+					
 					
 
 					
