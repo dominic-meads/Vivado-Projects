@@ -38,33 +38,39 @@ module UART_Tx
 	reg r_Tx = 1;                 // output register for o_Tx
 	reg r_RFN = 1;                // output register for o_RFN
 	reg [10:0] CPB_count = 0;     // CPB_count for the clocks per bit (CPB)
-	reg [3:0] sample_count = 0;   // CPB_count to keep track of which bit we are transmitting
-	reg ncount_E;                 // count enable (ACTIVE LOW)
+	reg nCPB_count_E = 1;         // CPB_count enable (ACTIVE LOW)
+	reg [3:0] sample_count = 0;   // to keep track of which bit we are transmitting
+	reg nsample_count_E = 1;      // sample_count enable (ACTIVE LOW)
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// counters 
 	always @ (posedge clk)
 		begin 
-			if (!ncount_E)  // active low
+			if (!nCPB_count_E)  // active low
 				begin 
 					if (CPB_count < CPB - 1)
 						CPB_count <= CPB_count + 1;
 					else 
 						CPB_count <= 0;
-				end // if (!ncount_E)
+				end // if (!nCPB_count_E)
 			else 
-				CPB_count <= 0;  // if ncount_E low, CPB_count is reset to 0
+				CPB_count <= 0;  // if nCPB_count_E low, CPB_count is reset to 0
 		end // always
   
 	always @ (posedge clk)
-		begin 
-			if (CPB_count == CPB - 1)  
+		begin
+			if (!nsample_count_E)
 				begin 
-					if (sample_count <= 9)  // counter counts up to 10 (11 counts) to ensure full stop bit is sent      
-						sample_count <= sample_count + 1;
-					else
-						sample_count <= 0;
-				end // if (CPB_count...
+					if (CPB_count == CPB - 1)  
+						begin 
+							if (sample_count <= 9)  // counter counts up to 10 (11 counts) to ensure full stop bit is sent      
+								sample_count <= sample_count + 1;
+							else
+								sample_count <= 0;
+						end  // if (CPB_count...
+				end      // if (!nsample_count_E)
+			else     // if nsample_count_E is high
+				sample_count <= 0;  // disable counter
 		end // always
 	
 	assign o_CPB_count = CPB_count;        // output assignments
@@ -83,14 +89,16 @@ module UART_Tx
 						r_RFN <= 0;     // not ready for new data (with the exception of the first transmission)
 						if (!nTx_EN)
 							begin
-								ncount_E <= 0;                      // activate CPB_count
+								nCPB_count_E <= 0;                  // activate CPB_count
+								nsample_count_E <= 0;               // activate sample_count
 								temp <= {1'b1, i_data[7:0], 1'b0};  // concatenate the stop bit (high), data, and start bit (low)
 								STATE <= TRANSMIT;                  // move to transmit state
 							end  // if (!nTx_EN)
 						else     // if nTx_EN
 							begin 
-								ncount_E <= 1;  // CPB_count disabled
-								STATE <= IDLE;  // stay in IDLE
+								nCPB_count_E <= 1;     // CPB_count disabled
+								nsample_count_E <= 1;  // sample_count disabled
+								STATE <= IDLE;         // stay in IDLE
 							end  // else
 					end  // IDLE
 				
@@ -100,25 +108,27 @@ module UART_Tx
 							begin 
 								r_Tx <= temp[sample_count];  // serialize data
 								r_RFN <= 0;                  // dont send new data
-								ncount_E <= 0;               // keep CPB_count enabled
+								nCPB_count_E <= 0;           // keep CPB_count enabled
+								nsample_count_E <= 0;        // keep sample_count enabled
 								STATE <= TRANSMIT;           // Keep transmitting
 							end  // if (sample_count < 10)
 						else     // if sample_count == 10
 							begin 
-								r_Tx <= 1;      // hold line high (should already be high)
-								r_RFN <= 1;     // send a single high pulse indicating ready for next input data
-								ncount_E <= 1;  // disable CPB_count
-								STATE <= IDLE;  // wait for the next nTx_EN
+								r_Tx <= 1;            // hold line high (should already be high)
+								r_RFN <= 1;           // send a single high pulse indicating ready for next input data
+								nCPB_count_E <= 1;    // disable CPB_count
+								nsample_count_E <= 1; // disable nsample_count_E
+								STATE <= IDLE;        // wait for the next nTx_EN
 							end  // else 
 					end  // TRANSMIT
 					
 				default :
 					begin 
-						r_Tx <= 1;        // hold Tx line high
-						r_RFN <= 0;       // RFN low
-						ncount_E <= 1;    // disable CPB_count
-						temp <= 10'h3FF;  // temp reg is all 1s
-						STATE <= IDLE;    // state is IDLE
+						r_Tx <= 1;             // hold Tx line high
+						r_RFN <= 0;            // RFN low
+						nCPB_count_E <= 1;     // disable CPB_count
+						nsample_count_E <= 1;  // disable sample_count
+						STATE <= IDLE;         // state is IDLE
 					end  // default
 			endcase
 		end  // always
@@ -129,7 +139,7 @@ module UART_Tx
 		assign o_Tx = r_Tx;
 	    assign o_RFN = r_RFN;
 	    assign o_sample_count = sample_count;
-	    assign o_CPB_countr = CPB_count;
+	    assign o_CPB_count = CPB_count;
 		// end output assignments
 		
 endmodule  // UART_Tx
