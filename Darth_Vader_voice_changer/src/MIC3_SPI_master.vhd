@@ -49,7 +49,7 @@ end MIC3_SPI_master;
 architecture rtl of MIC3_SPI_master is
 
   -- counter to create sclk
-  signal r_sclk_counter : integer range 0 to 139 := 0;
+  signal r_sclk_counter : integer range 0 to 141 := 0;
   
   -- FSM
   type t_state is (DUMMY, SAMPLE);
@@ -57,15 +57,15 @@ architecture rtl of MIC3_SPI_master is
 
 begin
 
-  -- counts the i_clk cycles to create a counter that wraps once every 1.4 us
-  -- this will create an sclk frequency of 1/1.4 us or 714.285 KHz
+  -- counts the i_clk cycles to create a counter that wraps once every 1.42 us
+  -- this will create an sclk frequency of 1/1.42 us or 704.225 KHz
   SCLK_GEN_PROC : process(i_clk, i_rst) 
   begin 
     if rising_edge(i_clk) then 
       if i_rst = '1' then 
         r_sclk_counter <= 0;
       else 
-        if r_sclk_counter < 139 then 
+        if r_sclk_counter < 141 then 
           r_sclk_counter <= r_sclk_counter + 1;
         else 
           r_sclk_counter <= 0;
@@ -75,7 +75,7 @@ begin
   end process;
   
   -- create 50% duty cycle on sclk
-  o_sclk <= '1' when r_sclk_counter <= 69 else '0';
+  o_sclk <= '1' when r_sclk_counter <= 70 else '0';
   
   
 
