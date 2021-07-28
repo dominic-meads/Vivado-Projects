@@ -33,7 +33,8 @@ end MIC3_SPI_master_tb;
 
 architecture sim of MIC3_SPI_master_tb is
 
-  constant clk_hz : integer := 100e6;
+  -- i_clk parameters
+  constant clk_hz : integer := 100e6;  -- using the 100 MHz clk on the Arty board, not the 12 MHz clk.
   constant clk_period : time := 1 sec / clk_hz;
 
   -- DUT ports
@@ -43,9 +44,35 @@ architecture sim of MIC3_SPI_master_tb is
   signal o_sclk : std_logic;  
   signal o_cs   : std_logic;  
   signal o_dv   : std_logic;  -- output data valid
-  signal o_data : std_logic_vector(11 downto 0) -- 12 bit word converted from SPI
+  signal o_data : std_logic_vector(11 downto 0); -- 12 bit word converted from SPI
 
 begin
 
+  DUT : entity work.MIC3_SPI_master(rtl)
+  port map(
+    i_clk => i_clk,
+    i_rst => i_rst,
+    i_miso => i_miso,
+    o_sclk => o_sclk,
+    o_cs => o_cs,
+    o_dv => o_dv,
+    o_data => o_data
+    );
+    
+  CLK_GEN_PROC : process
+  begin 
+    wait for clk_period / 2;
+    i_clk <= not i_clk;
+  end process;
+  
+  STIM_PROC : process
+  begin 
+    wait for 100 ns;
+    i_rst <= '0';
+    wait for 10 us;
+    i_rst <= '1';
+    wait for 100 ns;
+    wait;
+  end process;
 
 end sim;
