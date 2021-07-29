@@ -67,11 +67,11 @@ begin
   
   STIM_PROC : process
   begin 
-    wait for 100 ns;
+    wait for 1 us;
     i_rst <= '0';
     wait for 10 us;
     i_rst <= '1';
-    wait for 100 ns;
+    wait for 100 us;
     wait;
   end process;
 
