@@ -53,11 +53,12 @@ architecture rtl of MIC3_SPI_master is
   signal r_clk_cntr_en : std_logic := '1';
   
   -- sclk edge counter
-  signal r_sclk_cntr : integer range 0 to 15 := 1;
+  signal r_sclk_cntr : integer range 0 to 16 := 1;
   
   -- FSM
-  type t_state is (DUMMY, SAMPLE);
-  signal STATE : t_state := DUMMY;
+  type t_state is (INIT_DUMMY, DISABLE, CONVERT);
+  signal CURRENT_STATE : t_state := INIT_DUMMY;
+  signal NEXT_STATE : t_state := DISABLE;
 
 begin
 
@@ -93,7 +94,7 @@ begin
         r_sclk_cntr <= 0;
       else 
         if r_clk_cntr = 141 then 
-          if r_sclk_cntr < 15 then
+          if r_sclk_cntr < 16 then
             r_sclk_cntr <= r_sclk_cntr + 1;
           else 
             r_sclk_cntr <= 0;
@@ -102,6 +103,38 @@ begin
       end if;
     end if;
   end process;
+  
+  -- FSM
+  FSM_PROC : process(all)
+  begin
+    case CURRENT_STATE is 
+      when INIT_DUMMY =>  -- after power on or post-shutdown mode, the ADC must initialize for 1 us or a single "dummy" conversion
+        if r_sclk_cntr = 16 then 
+          NEXT_STATE <= DISABLE;
+        else 
+          NEXT_STATE <= CURRENT_STATE;
+        end if;
+        
+      when DISABLE =>  -- o_cs is high at this time, disabling the ADC for a minimum of 50 ns
+        if r_clk_cntr = 5 then  -- enable and monitor r_clk_cntr for 6 counts or 60 ns, then move to CONVERT state
+          NEXT_STATE <= CONVERT;
+        else 
+          NEXT_STATE <= CURRENT_STATE;
+        end if; 
+        
+      when CONVERT => 
+        if r_sclk_cntr = 16 then 
+          NEXT_STATE <= DISABLE;
+        else 
+          NEXT_STATE <= CURRENT_STATE;
+        end if;
+        
+      when others => 
+        NEXT_STATE <= CURRENT_STATE;
+    end case;
+  end process;
+    
+      
             
         
   
