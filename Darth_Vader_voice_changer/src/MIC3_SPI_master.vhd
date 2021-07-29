@@ -49,7 +49,11 @@ end MIC3_SPI_master;
 architecture rtl of MIC3_SPI_master is
 
   -- counter to create sclk
-  signal r_sclk_counter : integer range 0 to 141 := 0;
+  signal r_clk_cntr : integer range 0 to 141 := 0;
+  signal r_clk_cntr_en : std_logic := '1';
+  
+  -- sclk edge counter
+  signal r_sclk_cntr : integer range 0 to 15 := 1;
   
   -- FSM
   type t_state is (DUMMY, SAMPLE);
@@ -59,23 +63,50 @@ begin
 
   -- counts the i_clk cycles to create a counter that wraps once every 1.42 us
   -- this will create an sclk frequency of 1/1.42 us or 704.225 KHz
-  SCLK_GEN_PROC : process(i_clk, i_rst) 
+  SCLK_GEN_PROC : process(i_clk) 
   begin 
     if rising_edge(i_clk) then 
       if i_rst = '1' then 
-        r_sclk_counter <= 0;
-      else 
-        if r_sclk_counter < 141 then 
-          r_sclk_counter <= r_sclk_counter + 1;
+        r_clk_cntr <= 0;
+      else
+        if r_clk_cntr_en = '1' then
+          if r_clk_cntr < 141 then 
+            r_clk_cntr <= r_clk_cntr + 1;
+          else 
+            r_clk_cntr <= 0;
+          end if;
         else 
-          r_sclk_counter <= 0;
+          r_clk_cntr <= 0;
         end if;
       end if;
     end if;
   end process;
   
   -- create 50% duty cycle on sclk
-  o_sclk <= '1' when r_sclk_counter <= 70 else '0';
+  o_sclk <= '1' when r_clk_cntr <= 70 else '0';
+  
+  -- counts positive edges on sclk 
+  SCLK_CNTR_PROC : process(i_clk)
+  begin
+    if rising_edge(i_clk) then 
+      if i_rst = '1' then
+        r_sclk_cntr <= 0;
+      else 
+        if r_clk_cntr = 141 then 
+          if r_sclk_cntr < 15 then
+            r_sclk_cntr <= r_sclk_cntr + 1;
+          else 
+            r_sclk_cntr <= 0;
+          end if;
+        end if;
+      end if;
+    end if;
+  end process;
+            
+        
+  
+  
+  
   
   
 
