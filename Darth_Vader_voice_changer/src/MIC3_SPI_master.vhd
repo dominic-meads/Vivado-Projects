@@ -58,7 +58,7 @@ architecture rtl of MIC3_SPI_master is
   -- FSM
   type t_state is (INIT_DUMMY, DISABLE, CONVERT);
   signal CURRENT_STATE : t_state := INIT_DUMMY;
-  signal NEXT_STATE : t_state := DISABLE;
+  signal NEXT_STATE : t_state;
 
 begin
 
@@ -105,7 +105,7 @@ begin
   end process;
   
   -- FSM
-  FSM_PROC : process(all)
+  STATE_TRANSITION_PROC : process(r_sclk_cntr, r_clk_cntr)
   begin
     case CURRENT_STATE is 
       when INIT_DUMMY =>  -- after power on or post-shutdown mode, the ADC must initialize for 1 us or a single "dummy" conversion
@@ -116,14 +116,14 @@ begin
         end if;
         
       when DISABLE =>  -- o_cs is high at this time, disabling the ADC for a minimum of 50 ns
-        if r_clk_cntr = 5 then  -- enable and monitor r_clk_cntr for 6 counts or 60 ns, then move to CONVERT state
+        if r_clk_cntr = 6 then  -- enable and monitor r_clk_cntr for 6 counts or 60 ns, then move to CONVERT state
           NEXT_STATE <= CONVERT;
         else 
           NEXT_STATE <= CURRENT_STATE;
         end if; 
         
       when CONVERT => 
-        if r_sclk_cntr = 16 then 
+        if (r_sclk_cntr = 16 and r_clk_cntr > 6) then 
           NEXT_STATE <= DISABLE;
         else 
           NEXT_STATE <= CURRENT_STATE;
@@ -133,17 +133,36 @@ begin
         NEXT_STATE <= CURRENT_STATE;
     end case;
   end process;
-    
-      
-            
-        
   
+  STATE_RST_PROC : process(i_clk)
+  begin 
+    if rising_edge(i_clk) then 
+      if i_rst = '1' then 
+        CURRENT_STATE <= INIT_DUMMY;
+      else 
+        CURRENT_STATE <= NEXT_STATE;
+      end if;
+    end if;
+  end process;
   
-  
-  
-  
-
-  
-
+  STATE_DEFINE_PROC : process(i_clk)
+  begin 
+    if rising_edge(i_clk) then 
+      if i_rst = '1' then 
+        o_cs <= '1';          -- bring CS high to disable ADC
+        r_clk_cntr_en <= '0'; -- disable/reset counters
+      else
+        r_clk_cntr_en <= '1';
+        case NEXT_STATE is 
+          when INIT_DUMMY => 
+            o_cs <= '0'; 
+          when DISABLE =>
+            o_cs <= '1';
+          when CONVERT => 
+            o_cs <= '0';
+        end case;
+      end if;
+    end if;
+  end process; 
 
 end rtl;
