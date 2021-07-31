@@ -53,7 +53,7 @@ architecture rtl of MIC3_SPI_master is
   signal r_clk_cntr_en : std_logic := '1';
   
   -- sclk edge counter
-  signal r_sclk_cntr : integer range 0 to 16 := 1;
+  signal r_sclk_cntr : integer range 0 to 16 := 0;
   
   -- FSM
   type t_state is (INIT_DUMMY, DISABLE, CONVERT);
