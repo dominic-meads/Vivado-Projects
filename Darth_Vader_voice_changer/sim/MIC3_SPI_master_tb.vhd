@@ -45,6 +45,13 @@ architecture sim of MIC3_SPI_master_tb is
   signal o_cs   : std_logic;  
   signal o_dv   : std_logic;  -- output data valid
   signal o_data : std_logic_vector(11 downto 0); -- 12 bit word converted from SPI
+  
+  -- sclk edge counter
+  signal r_sclk_cntr : integer range 0 to 16 := 0;
+  
+  -- 12 bit test sample from ADC
+  signal sample : std_logic_vector(11 downto 0) := "110010100011";
+  
 
 begin
 
@@ -65,15 +72,33 @@ begin
     i_clk <= not i_clk;
   end process;
   
+  SCLK_EDGE_CNTR_PROC : process
+  begin 
+    wait until falling_edge(o_sclk);
+      if r_sclk_cntr < 16 then 
+        r_sclk_cntr <= r_sclk_cntr + 1;
+      else 
+        r_sclk_cntr <= 0;
+      end if;
+  end process;
+    
   STIM_PROC : process
   begin 
     wait for 10 us;
-    i_rst <= '0';
+      i_rst <= '0';
     wait for 50 us;
-    i_rst <= '1';
+      i_rst <= '1';
     wait for 10 us;
-    i_rst <= '0';
-    wait for 20 us;
+      i_rst <= '0';              -- verify proper reset with dummy conversion
+    wait until r_sclk_cntr = 16; -- wait for dummy conversion to finish
+    wait until o_cs = '1';       -- wait for DISABLE state
+    wait for 100 ns;             -- wait minimum tquiet x 2 (pg 9 of datasheet)
+    wait until o_cs = '0';       -- waits for master (FPGA) to tell ADC when to start conversion
+    wait for 20 ns;              -- wait for t3 (time from CS falling edge to SDATA TRI-STATE DISABLE
+      i_miso <= '0';             -- SDATA line now out of high-z
+    wait until r_sclk_cntr = 4;  -- wait for 4th falling edge of sclk (leading zeros are clocked out on previous falling edges)
+      i_miso <= sample(11);       -- output MSB of sample 
+      
     wait;
   end process;
 
