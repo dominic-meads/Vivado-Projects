@@ -45,13 +45,11 @@ architecture sim of MIC3_SPI_master_tb is
   signal o_cs   : std_logic;  
   signal o_dv   : std_logic;  -- output data valid
   signal o_data : std_logic_vector(11 downto 0); -- 12 bit word converted from SPI
-  
-  -- sclk edge counter
-  signal r_sclk_cntr : integer range 0 to 16 := 0;
-  
+ 
   -- 12 bit test sample from ADC
   signal sample : std_logic_vector(11 downto 0) := "110010100011";
   
+  signal sclk_edge_cntr : integer := 0;
 
 begin
 
@@ -71,16 +69,6 @@ begin
     wait for clk_period / 2;
     i_clk <= not i_clk;
   end process;
-  
-  SCLK_EDGE_CNTR_PROC : process
-  begin 
-    wait until falling_edge(o_sclk);
-      if r_sclk_cntr < 16 then 
-        r_sclk_cntr <= r_sclk_cntr + 1;
-      else 
-        r_sclk_cntr <= 0;
-      end if;
-  end process;
     
   STIM_PROC : process
   begin 
@@ -89,17 +77,68 @@ begin
     wait for 50 us;
       i_rst <= '1';
     wait for 10 us;
-      i_rst <= '0';              -- verify proper reset with dummy conversion
-    wait until r_sclk_cntr = 16; -- wait for dummy conversion to finish
-    wait until o_cs = '1';       -- wait for DISABLE state
-    wait for 100 ns;             -- wait minimum tquiet x 2 (pg 9 of datasheet)
-    wait until o_cs = '0';       -- waits for master (FPGA) to tell ADC when to start conversion
-    wait for 20 ns;              -- wait for t3 (time from CS falling edge to SDATA TRI-STATE DISABLE
-      i_miso <= '0';             -- SDATA line now out of high-z
-    wait until r_sclk_cntr = 4;  -- wait for 4th falling edge of sclk (leading zeros are clocked out on previous falling edges)
-      i_miso <= sample(11);       -- output MSB of sample 
+      i_rst <= '0';                 -- verify proper reset with dummy conversion
+    wait until o_cs = '1';          -- wait for DISABLE state after dummy conversion
+    wait for 100 ns;                -- wait minimum tquiet x 2 (pg 9 of datasheet)
+    wait until o_cs = '0';          -- waits for master (FPGA) to tell ADC when to start conversion
+    wait for 20 ns;                 -- wait for t3 (time from CS falling edge to SDATA TRI-STATE DISABLE
+      i_miso <= '0';                -- SDATA line now out of high-z
+    wait until o_sclk = '0';          -- wait for 1st falling edge of sclk 
+      i_miso <= '0';
+      sclk_edge_cntr <= 1;
+    wait until o_sclk = '0';          -- clock out 3rd leading zero 
+      i_miso <= '0';
+      sclk_edge_cntr <= 2;    
+    wait until o_sclk = '0';          -- clock out 4th leading zero
+      i_miso <= '0';
+      sclk_edge_cntr <= 3;      
+    wait until o_sclk = '0';          -- clock out MSB of sample on 4th falling edge 
+      i_miso <= sample(11);
+      sclk_edge_cntr <= 4;      
+    wait until o_sclk = '0';          -- clock out subsequent samples on falling edges
+      i_miso <= sample(10);
+      sclk_edge_cntr <= 5;
+    wait until o_sclk = '0';          
+      i_miso <= sample(9);
+      sclk_edge_cntr <= 6;
+    wait until o_sclk = '0';          
+      i_miso <= sample(8);
+      sclk_edge_cntr <= 7;
+    wait until o_sclk = '0';          
+      i_miso <= sample(7);
+      sclk_edge_cntr <= 8;
+    wait until o_sclk = '0';          
+      i_miso <= sample(6);
+      sclk_edge_cntr <= 9;
+    wait until o_sclk = '0';          
+      i_miso <= sample(5);
+      sclk_edge_cntr <= 10;
+    wait until o_sclk = '0';          
+      i_miso <= sample(4);
+      sclk_edge_cntr <= 11;
+    wait until o_sclk = '0';          
+      i_miso <= sample(3);
+      sclk_edge_cntr <= 12;
+    wait until o_sclk = '0';          
+      i_miso <= sample(2);
+      sclk_edge_cntr <= 13;
+    wait until o_sclk = '0';          
+      i_miso <= sample(1);
+      sclk_edge_cntr <= 14;
+    wait until o_sclk = '0';          
+      i_miso <= sample(0);
+      sclk_edge_cntr <= 15;
+    wait until o_sclk = '0';
+      sclk_edge_cntr <= 16;
+    wait for 6 ns;                  -- back to high-z min. 6 ns after 16th falling edge of sclk (t8 in datasheet)
+      i_miso <= 'Z';
+    wait until o_sclk <= '1';
+      sclk_edge_cntr <= 0;
+    --wait until o_dv = '1';
       
+    
     wait;
+    
   end process;
 
 end sim;
