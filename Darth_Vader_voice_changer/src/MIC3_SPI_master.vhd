@@ -59,6 +59,11 @@ architecture rtl of MIC3_SPI_master is
   type t_state is (INIT_DUMMY, DISABLE, CONVERT);
   signal CURRENT_STATE : t_state := INIT_DUMMY;
   signal NEXT_STATE : t_state;
+  
+  -- input/output registers
+  signal r_miso : std_logic := '0';
+  signal r_cs : std_logic := '1';
+  signal r_data : std_logic_vector(16 downto 0) := (others => '0');
 
 begin
 
@@ -83,8 +88,26 @@ begin
     end if;
   end process;
   
-  -- create 50% duty cycle on sclk
-  o_sclk <= '1' when r_clk_cntr <= 70 else '0';
+  -- controls state of sclk
+  SCLK_OUTPUT_PROC : process(i_clk)
+  begin
+    if rising_edge(i_clk) then 
+      if i_rst = '1' then 
+        o_sclk <= '1';
+      else 
+        if r_cs = '1' then 
+          o_sclk <= '1'; 
+        else 
+          if r_clk_cntr <= 70 then 
+            o_sclk <= '1';
+          else 
+            o_sclk <= '0';
+          end if;
+        end if;
+      end if;
+    end if;
+  end process;
+      
   
   -- counts positive edges on sclk 
   SCLK_CNTR_PROC : process(i_clk)
@@ -115,7 +138,7 @@ begin
           NEXT_STATE <= CURRENT_STATE;
         end if;
         
-      when DISABLE =>  -- o_cs is high at this time, disabling the ADC for a minimum of 50 ns
+      when DISABLE =>  -- r_cs is high at this time, disabling the ADC for a minimum of 50 ns
         if r_clk_cntr = 6 then  -- enable and monitor r_clk_cntr for 6 counts or 60 ns, then move to CONVERT state
           NEXT_STATE <= CONVERT;
         else 
@@ -149,20 +172,59 @@ begin
   begin 
     if rising_edge(i_clk) then 
       if i_rst = '1' then 
-        o_cs <= '1';          -- bring CS high to disable ADC
+        r_cs <= '1';          -- bring CS high to disable ADC
         r_clk_cntr_en <= '0'; -- disable/reset counters
       else
         r_clk_cntr_en <= '1';
         case NEXT_STATE is 
           when INIT_DUMMY => 
-            o_cs <= '0'; 
+            r_cs <= '0'; 
           when DISABLE =>
-            o_cs <= '1';
+            r_cs <= '1';
           when CONVERT => 
-            o_cs <= '0';
+            r_cs <= '0';
         end case;
       end if;
     end if;
-  end process; 
+  end process;
+
+  o_cs <= r_cs;
+  
+  -- samples each bit on miso line
+  SAMPLE_PROC : process(i_clk)
+  begin 
+    if rising_edge(i_clk) then 
+      if i_rst = '1' or r_cs = '1' then 
+        r_data <= (others => '0');
+        o_dv <= '0';
+      else
+        r_miso <= i_miso;  -- register input data
+        case r_sclk_cntr is 
+          when 0  => r_data(16) <= r_miso;
+          when 1  => r_data(15) <= r_miso;
+          when 2  => r_data(14) <= r_miso;          
+          when 3  => r_data(13) <= r_miso;          
+          when 4  => r_data(12) <= r_miso;
+          when 5  => r_data(11) <= r_miso;
+          when 6  => r_data(10) <= r_miso;
+          when 7  => r_data(9)  <= r_miso;
+          when 8  => r_data(8)  <= r_miso;
+          when 9  => r_data(7)  <= r_miso;
+          when 10 => r_data(6)  <= r_miso;
+          when 11 => r_data(5)  <= r_miso;
+          when 12 => r_data(4)  <= r_miso;
+          when 13 => r_data(3)  <= r_miso;
+          when 14 => r_data(2)  <= r_miso;
+          when 15 => r_data(1)  <= r_miso;
+          when 16 => r_data(0)  <= '0';
+        end case;
+      end if;
+    end if;
+  end process;
+  
+  o_data <= r_data(12 downto 1);  -- omit leading zeros
+  
+  -- enable o_dv after the 16th positive edge and before disable state
+  o_dv <= '1' when (r_sclk_cntr = 16 and r_cs = '0') else '0';  
 
 end rtl;
