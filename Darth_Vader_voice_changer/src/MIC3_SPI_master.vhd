@@ -55,15 +55,17 @@ architecture rtl of MIC3_SPI_master is
   -- sclk edge counter
   signal r_sclk_cntr : integer range 0 to 16 := 0;
   
+  -- makes sure o_dv can only assert in CONVERT state
+  signal r_dv_en : std_logic := '0';
+  
   -- FSM
   type t_state is (INIT_DUMMY, DISABLE, CONVERT);
   signal CURRENT_STATE : t_state := INIT_DUMMY;
   signal NEXT_STATE : t_state;
   
   -- input/output registers
-  signal r_miso : std_logic := '0';
   signal r_cs : std_logic := '1';
-  signal r_data : std_logic_vector(16 downto 0) := (others => '0');
+  signal r_data : std_logic_vector(11 downto 0) := (others => '0');
 
 begin
 
@@ -171,7 +173,7 @@ begin
   STATE_DEFINE_PROC : process(i_clk)
   begin 
     if rising_edge(i_clk) then 
-      if i_rst = '1' then 
+      if i_rst = '1' then
         r_cs <= '1';          -- bring CS high to disable ADC
         r_clk_cntr_en <= '0'; -- disable/reset counters
       else
@@ -194,37 +196,39 @@ begin
   SAMPLE_PROC : process(i_clk)
   begin 
     if rising_edge(i_clk) then 
-      if i_rst = '1' or r_cs = '1' then 
+      if i_rst = '1' then 
         r_data <= (others => '0');
-        o_dv <= '0';
       else
-        r_miso <= i_miso;  -- register input data
-        case r_sclk_cntr is 
-          when 0  => r_data(16) <= r_miso;
-          when 1  => r_data(15) <= r_miso;
-          when 2  => r_data(14) <= r_miso;          
-          when 3  => r_data(13) <= r_miso;          
-          when 4  => r_data(12) <= r_miso;
-          when 5  => r_data(11) <= r_miso;
-          when 6  => r_data(10) <= r_miso;
-          when 7  => r_data(9)  <= r_miso;
-          when 8  => r_data(8)  <= r_miso;
-          when 9  => r_data(7)  <= r_miso;
-          when 10 => r_data(6)  <= r_miso;
-          when 11 => r_data(5)  <= r_miso;
-          when 12 => r_data(4)  <= r_miso;
-          when 13 => r_data(3)  <= r_miso;
-          when 14 => r_data(2)  <= r_miso;
-          when 15 => r_data(1)  <= r_miso;
-          when 16 => r_data(0)  <= '0';
-        end case;
+        if r_cs = '1' then 
+          r_data <= (others => '0');
+        else
+          if r_clk_cntr = 1 then -- sample right after rising edge on sclk 
+            case r_sclk_cntr is           
+              when 4  => r_data(11) <= i_miso;  -- start at 4th clk edge because leading zeros are before
+              when 5  => r_data(10) <= i_miso;
+              when 6  => r_data(9)  <= i_miso;
+              when 7  => r_data(8)  <= i_miso;
+              when 8  => r_data(7)  <= i_miso;
+              when 9  => r_data(6)  <= i_miso;
+              when 10 => r_data(5)  <= i_miso;
+              when 11 => r_data(4)  <= i_miso;
+              when 12 => r_data(3)  <= i_miso;
+              when 13 => r_data(2)  <= i_miso;
+              when 14 => r_data(1)  <= i_miso;
+              when 15 => r_data(0)  <= i_miso;
+              when others => null;
+            end case;
+          end if;
+        end if;
       end if;
     end if;
   end process;
   
-  o_data <= r_data(12 downto 1);  -- omit leading zeros
+  o_data <= r_data;  
   
-  -- enable o_dv after the 16th positive edge and before disable state
-  o_dv <= '1' when (r_sclk_cntr = 16 and r_cs = '0') else '0';  
+  -- o_dv only able to assert after the full dummy conversion has been finished;
+  r_dv_en <= '1' when CURRENT_STATE = CONVERT and NEXT_STATE = DISABLE else '0';
+  -- enable o_dv after the 16th positive edge during CONVERT state
+  o_dv <= '1' when (r_sclk_cntr = 16 and r_dv_en = '1') else '0';  
 
 end rtl;
