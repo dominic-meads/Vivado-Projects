@@ -71,6 +71,7 @@ begin
 
   -- counts the i_clk cycles to create a counter that wraps once every 1.42 us
   -- this will create an sclk frequency of 1/1.42 us or 704.225 KHz
+  -- sclk freq of 704.225 KHz results in sampling freq of 704.225 KHz / 16 =  44.01 KHz
   SCLK_GEN_PROC : process(i_clk) 
   begin 
     if rising_edge(i_clk) then 
@@ -97,7 +98,7 @@ begin
       if i_rst = '1' then 
         o_sclk <= '1';
       else 
-        if r_cs = '1' then 
+        if r_cs = '1' then  -- only toggle sclk when cs is active
           o_sclk <= '1'; 
         else 
           if r_clk_cntr <= 70 then 
@@ -202,7 +203,7 @@ begin
         if r_cs = '1' then 
           r_data <= (others => '0');
         else
-          if r_clk_cntr = 1 then -- sample right after rising edge on sclk 
+          if r_clk_cntr = 1 then -- sample right after rising edge transition on sclk (r_clk_cntr goes from 141 -> 0)
             case r_sclk_cntr is           
               when 4  => r_data(11) <= i_miso;  -- start at 4th clk edge because leading zeros are before
               when 5  => r_data(10) <= i_miso;
@@ -227,6 +228,7 @@ begin
   o_data <= r_data;  
   
   -- o_dv only able to assert after the full dummy conversion has been finished;
+  -- if the dummy conversion was not finished, CURRENT_STATE = INIT_DUMMY and NEXT_STATE = DISABLE
   r_dv_en <= '1' when CURRENT_STATE = CONVERT and NEXT_STATE = DISABLE else '0';
   -- enable o_dv after the 16th positive edge during CONVERT state
   o_dv <= '1' when (r_sclk_cntr = 16 and r_dv_en = '1') else '0';  
