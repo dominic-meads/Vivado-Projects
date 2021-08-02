@@ -11,7 +11,7 @@
 -- Description: Fetches 12-bit digital audio data from the PMOD MIC3, a MEMS microphone
 --              connected to an ADC7476 (sampling @ ~44.1 KHz) DAC, using SPI.
 --
---              NOTE: Actual sampling frequency is 44.01 KHz, which is as close
+--              NOTE: Actual sampling frequency is 43.88 KHz, which is as close
 --                    I could get to 44.1 KHz without using a MMCM/PLL.
 -- 
 -- Dependencies: 100 MHz input clk
@@ -51,6 +51,10 @@ architecture rtl of MIC3_SPI_master is
   -- counter to create sclk
   signal r_clk_cntr : integer range 0 to 141 := 0;
   signal r_clk_cntr_en : std_logic := '1';
+  
+  -- disable (tquiet) counter
+  signal r_tquiet_cntr : integer range 0 to 5 := 0;  -- minimum 50 ns 
+  signal r_tquiet_cntr_en : std_logic := '0';
   
   -- sclk edge counter
   signal r_sclk_cntr : integer range 0 to 16 := 0;
@@ -118,20 +122,42 @@ begin
     if rising_edge(i_clk) then 
       if i_rst = '1' then
         r_sclk_cntr <= 0;
-      else 
-        if r_clk_cntr = 141 then 
-          if r_sclk_cntr < 16 then
-            r_sclk_cntr <= r_sclk_cntr + 1;
-          else 
-            r_sclk_cntr <= 0;
+      else
+        if r_clk_cntr_en = '0' then 
+          r_sclk_cntr <= 0;
+        else 
+          if r_clk_cntr = 141 then 
+            if r_sclk_cntr < 16 then
+              r_sclk_cntr <= r_sclk_cntr + 1;
+            else 
+              r_sclk_cntr <= 0;
+            end if;
           end if;
         end if;
       end if;
     end if;
   end process;
   
+  -- enusres 50 ns minimum of diable time when CS is high
+  TQUIET_CNTR_PROC : process(i_clk)
+  begin 
+    if rising_edge(i_clk) then 
+      if i_rst = '1' then
+        r_tquiet_cntr <= 0;
+      else 
+        if r_tquiet_cntr_en = '1' then 
+          if r_tquiet_cntr < 5 then 
+            r_tquiet_cntr <= r_tquiet_cntr + 1;
+          else 
+            r_tquiet_cntr <= 0;
+          end if;
+        end if;
+      end if;
+    end if;
+  end process; 
+  
   -- FSM
-  STATE_TRANSITION_PROC : process(r_sclk_cntr, r_clk_cntr)
+  STATE_TRANSITION_PROC : process(r_sclk_cntr, r_tquiet_cntr)
   begin
     case CURRENT_STATE is 
       when INIT_DUMMY =>  -- after power on or post-shutdown mode, the ADC must initialize for 1 us or a single "dummy" conversion
@@ -142,14 +168,14 @@ begin
         end if;
         
       when DISABLE =>  -- r_cs is high at this time, disabling the ADC for a minimum of 50 ns
-        if r_clk_cntr = 6 then  -- enable and monitor r_clk_cntr for 6 counts or 60 ns, then move to CONVERT state
+        if r_tquiet_cntr = 5 then  -- enable and monitor r_tquiet_cntr for 6 counts (5 + 1 for FSM latency) or 60 ns, then move to CONVERT state
           NEXT_STATE <= CONVERT;
         else 
           NEXT_STATE <= CURRENT_STATE;
         end if; 
         
       when CONVERT => 
-        if (r_sclk_cntr = 16 and r_clk_cntr > 6) then 
+        if r_sclk_cntr = 16 then 
           NEXT_STATE <= DISABLE;
         else 
           NEXT_STATE <= CURRENT_STATE;
@@ -175,17 +201,23 @@ begin
   begin 
     if rising_edge(i_clk) then 
       if i_rst = '1' then
-        r_cs <= '1';          -- bring CS high to disable ADC
-        r_clk_cntr_en <= '0'; -- disable/reset counters
+        r_cs <= '1';         
+        r_clk_cntr_en <= '0'; 
+        r_tquiet_cntr_en <= '0'; 
       else
-        r_clk_cntr_en <= '1';
         case NEXT_STATE is 
           when INIT_DUMMY => 
             r_cs <= '0'; 
+            r_clk_cntr_en <= '1';
+            r_tquiet_cntr_en <= '0';
           when DISABLE =>
             r_cs <= '1';
+            r_clk_cntr_en <= '0';
+            r_tquiet_cntr_en <= '1';
           when CONVERT => 
             r_cs <= '0';
+            r_clk_cntr_en <= '1';
+            r_tquiet_cntr_en <= '0';
         end case;
       end if;
     end if;
