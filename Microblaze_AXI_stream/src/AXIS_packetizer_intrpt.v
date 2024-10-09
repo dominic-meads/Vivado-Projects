@@ -27,7 +27,7 @@ module AXIS_packetizer_intrpt #(
 	parameter SMPLS        = 30,      // samples per packet
 	parameter FSMPL        = 200,     // sampling frequency
 	parameter DATA_WIDTH   = 16,      // axis_tdata width in bits
-  parameter TDATA_CLKS   = 4        // period in clock cycles that m_axis_tdata is held in the same state
+  parameter TDATA_CLKS   = 32        // period in clock cycles that m_axis_tdata is held in the same state
 	)(
 	input  aclk,
 	input  aresetn,
