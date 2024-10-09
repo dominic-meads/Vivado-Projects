@@ -98,18 +98,31 @@ int main()
 //  data = d0;                 // data is stored after
 //  xil_printf("Data from AXI4-Stream: %d\n\r\n\r",data);
 
-  int data[20];
+  int data[30];
 
-  for (int i = 0; i <= 19; i++)
+  while(1)
   {
-	  getfsl(data[i], 0);  // 200 Samples per second
-  }
+	  // read in data on slave AXIS
+	  for (int i = 0; i <= 29; i++)
+	  {
+		  getfsl(data[i], 0);
+	  }
 
-  for (int i = 0; i <= 19; i++)
-  {
-	  xil_printf("Data from AXI4-Stream (Sample %d): %d\n\r\n\r",i,data[i]);
-  }
+	  // do some processing
 
+	  // output data on master AXIS
+	  for (int i = 0; i <= 29; i++)
+	  {
+		  putfsl(data[i], 0);
+	  }
+
+	  // print data that was read in
+	  for (int i = 0; i <= 29; i++)
+	  {
+		  //xil_printf("Data from AXI4-Stream (Sample %d): %d\n\r\n\r",i,data[i]);
+		  xil_printf("%d\n\r",data[i]);
+	  }
+  }
   cleanup_platform();
   return XST_SUCCESS;
 }
