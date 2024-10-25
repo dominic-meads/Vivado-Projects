@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="sine_wave_gen_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="sine_wave_gen_tb" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0fs"></ZoomStartTime>
+      <ZoomEndTime time="123500001fs"></ZoomEndTime>
+      <Cursor1Time time="89950000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="252"></NameColumnWidth>
+      <ValueColumnWidth column_width="103"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="27" />
+   <wvobject fp_name="/sine_wave_gen_tb/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider24">
+      <obj_property name="label">Waveforms</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">#E0FFFF</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/din" type="array">
+      <obj_property name="ElementShortName">din[15:0]</obj_property>
+      <obj_property name="ObjectShortName">din[15:0]</obj_property>
+      <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
+      <obj_property name="CellHeight">100</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/din" type="array">
+      <obj_property name="ElementShortName">din[15:0]</obj_property>
+      <obj_property name="ObjectShortName">din[15:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/dout" type="array">
+      <obj_property name="ElementShortName">dout[15:0]</obj_property>
+      <obj_property name="ObjectShortName">dout[15:0]</obj_property>
+      <obj_property name="WaveformStyle">STYLE_ANALOG</obj_property>
+      <obj_property name="CellHeight">100</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+      <obj_property name="AnalogYRangeMin">2810</obj_property>
+      <obj_property name="AnalogYRRangeMax">9083</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/dout" type="array">
+      <obj_property name="ElementShortName">dout[15:0]</obj_property>
+      <obj_property name="ObjectShortName">dout[15:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider29">
+      <obj_property name="label">Internals</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">#FAAFBE</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/r_x" type="array">
+      <obj_property name="ElementShortName">r_x[15:0]</obj_property>
+      <obj_property name="ObjectShortName">r_x[15:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/r_x_z1" type="array">
+      <obj_property name="ElementShortName">r_x_z1[15:0]</obj_property>
+      <obj_property name="ObjectShortName">r_x_z1[15:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/r_x_z2" type="array">
+      <obj_property name="ElementShortName">r_x_z2[15:0]</obj_property>
+      <obj_property name="ObjectShortName">r_x_z2[15:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/r_y" type="array">
+      <obj_property name="ElementShortName">r_y[15:0]</obj_property>
+      <obj_property name="ObjectShortName">r_y[15:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/r_y_z1" type="array">
+      <obj_property name="ElementShortName">r_y_z1[15:0]</obj_property>
+      <obj_property name="ObjectShortName">r_y_z1[15:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/r_y_z2" type="array">
+      <obj_property name="ElementShortName">r_y_z2[15:0]</obj_property>
+      <obj_property name="ObjectShortName">r_y_z2[15:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/w_product_a1" type="array">
+      <obj_property name="ElementShortName">w_product_a1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">w_product_a1[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/w_product_a2" type="array">
+      <obj_property name="ElementShortName">w_product_a2[31:0]</obj_property>
+      <obj_property name="ObjectShortName">w_product_a2[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/w_product_b0" type="array">
+      <obj_property name="ElementShortName">w_product_b0[31:0]</obj_property>
+      <obj_property name="ObjectShortName">w_product_b0[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/w_product_b1" type="array">
+      <obj_property name="ElementShortName">w_product_b1[31:0]</obj_property>
+      <obj_property name="ObjectShortName">w_product_b1[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/uut/w_product_b2" type="array">
+      <obj_property name="ElementShortName">w_product_b2[31:0]</obj_property>
+      <obj_property name="ObjectShortName">w_product_b2[31:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider14">
+      <obj_property name="label">Testbench vars</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/r_din" type="array">
+      <obj_property name="ElementShortName">r_din[15:0]</obj_property>
+      <obj_property name="ObjectShortName">r_din[15:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/fid" type="array">
+      <obj_property name="ElementShortName">fid[31:0]</obj_property>
+      <obj_property name="ObjectShortName">fid[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/dout" type="array">
+      <obj_property name="ElementShortName">dout[15:0]</obj_property>
+      <obj_property name="ObjectShortName">dout[15:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+      <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/status" type="array">
+      <obj_property name="ElementShortName">status[31:0]</obj_property>
+      <obj_property name="ObjectShortName">status[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/sample" type="array">
+      <obj_property name="ElementShortName">sample[31:0]</obj_property>
+      <obj_property name="ObjectShortName">sample[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/r_wave_sample" type="array">
+      <obj_property name="ElementShortName">r_wave_sample[0:399][15:0]</obj_property>
+      <obj_property name="ObjectShortName">r_wave_sample[0:399][15:0]</obj_property>
+      <obj_property name="Radix">SIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/i" type="array">
+      <obj_property name="ElementShortName">i[31:0]</obj_property>
+      <obj_property name="ObjectShortName">i[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sine_wave_gen_tb/j" type="array">
+      <obj_property name="ElementShortName">j[31:0]</obj_property>
+      <obj_property name="ObjectShortName">j[31:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+</wave_config>
