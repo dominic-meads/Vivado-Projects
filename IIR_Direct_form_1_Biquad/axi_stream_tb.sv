@@ -21,7 +21,13 @@ module axi_stream_tb;
   
   reg signed [15:0] r_wave_sample [num_samples - 1:0];
 
-  iir_DF1_Biquad_AXIS uut (
+  iir_DF1_Biquad_AXIS #(
+    .a1_int_coeff(-31880),
+    .a2_int_coeff(15531),
+    .bo_int_coeff(167),
+    .b1_int_coeff(-302),
+    .b2_int_coeff(167)
+  ) uut (
     .clk(clk),
     .rst_n(rst_n),
     .s_axis_tvalid(r_s_axis_tvalid),
@@ -52,9 +58,9 @@ module axi_stream_tb;
     #1000
     rst_n = 1'b1; // release reset
 
-    repeat(num_samples)
+    repeat(num_samples)  // 10 MHz sampling
       begin 
-        #200
+        #80
         r_s_axis_tdata = r_wave_sample[j];
         j = j + 1;
         wait (clk == 1'b0) wait (clk == 1'b1) // wait for rising edge of clock

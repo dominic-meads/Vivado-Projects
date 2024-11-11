@@ -10,10 +10,23 @@
 // Target Devices: 7 Series
 // Tool Versions: Vivado 2020.2
 // Description: 
-//      Lowpass elliptical filter
-//      Cuttoff frequency of 60 kHz, with 40 dB stopband attenuation and 0.5 dB ripple in the passband
-//      Direct-form I structure BiQuad
-// 
+//      IIR Direct-form I structure BiQuad. Compatible with AXI4 streaming interface with paramaterized 
+//      coefficients in Q1.14 format I think? (coefficients are multiplied by 2^14, example below); 
+//
+//      Example: lowpass elliptical filter. Cuttoff frequency of 60 kHz (Fsample = 10 MHz), with 40 dB stopband attenuation and 0.5 dB ripple in the passband
+//        see MATLAB Script here: https://github.com/dominic-meads/Vivado-Projects/blob/main/IIR_Direct_form_1_Biquad/sample_gen.m
+//
+//        filter coefficients generated in MATLAB (multiplied floating point coefficients by 2^14)
+//  
+//        sos = {1.0000   -1.8057    1.0000    1.0000   -1.9459    0.9480}
+//                 b0         b1        b2        a0        a1        a2
+//          g = 0.0102 
+//  
+//        parameter a1_int_coeff = -31880, // a1 * 2^14
+//        parameter a2_int_coeff = 15531,  // a2 * 2^14
+//        parameter b0_int_coeff = 167,    // g * b0 * 2^14  (multiply denom coeffs by gain for DF1 [source 1])
+//        parameter b1_int_coeff = -302,   // g * b1 * 2^14 
+//        parameter b2_int_coeff = 167     // g * b2 * 2^14
 //
 // Dependencies: 
 // 
@@ -26,7 +39,13 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module iir_DF1_Biquad_AXIS(
+module iir_DF1_Biquad_AXIS #(
+  parameter a1_int_coeff = -31880,  // integer coefficients
+  parameter a2_int_coeff = 15531,
+  parameter b0_int_coeff = 167,
+  parameter b1_int_coeff = -302,
+  parameter b2_int_coeff = 167
+)(
   input  clk,
   input  rst_n,
   input  s_axis_tvalid,
@@ -40,11 +59,11 @@ module iir_DF1_Biquad_AXIS(
   // sos = {1.0000   -1.8057    1.0000    1.0000   -1.9459    0.9480}
   //         b0         b1        b2        a0        a1        a2
   //   g = 0.0102 
-  reg signed [15:0] a1_fixed = -31881;
-  reg signed [15:0] a2_fixed = 15531;
-  reg signed [15:0] b0_fixed = 167;    // g * b0 * 2^14  (multiply denom coeffs by gain for DF1 [source 1])
-  reg signed [15:0] b1_fixed = -302;   // g * b1 * 2^14 
-  reg signed [15:0] b2_fixed = 167;    // g * b2 * 2^14
+  reg signed [15:0] a1_fixed = a1_int_coeff;
+  reg signed [15:0] a2_fixed = a2_int_coeff;
+  reg signed [15:0] b0_fixed = b0_int_coeff;   // g * b0 * 2^14  (multiply denom coeffs by gain for DF1 [source 1])
+  reg signed [15:0] b1_fixed = b1_int_coeff;   // g * b1 * 2^14 
+  reg signed [15:0] b2_fixed = b2_int_coeff;   // g * b2 * 2^14
 
   // input register
   reg signed [15:0] r_x = 0;
