@@ -52,12 +52,12 @@ zplane(B,A);
 
 %% multiply coefficients to get fixed point
 
-Afixed = fix(A*(2^18))
-Bfixed = fix(B*(2^18))
+Afixed = fix(A*(2^14))
+Bfixed = fix(B*(2^14))
 
 %% check stability of fixed point coefficients
 figure('Color',[1 1 1]);
-zplane((Bfixed./2^18), (Afixed./2^18));
+zplane((Bfixed./2^14), (Afixed./2^14));
 hold on;
 title("Pole-Zero Plot After Fixed Point Conversion");
 
@@ -65,11 +65,12 @@ title("Pole-Zero Plot After Fixed Point Conversion");
 step_smpls = 1000*ones(1,1000);
 hn_fixed = filter(Bfixed,Afixed,step_smpls);
 figure('Color',[1 1 1]);
-plot(hn_fixed);
-
+plot(hn_fixed,'r');
+hold on;
 hn = filter(B,A,step_smpls);
-figure('Color',[1 1 1]);
-plot(hn);
+plot(hn,'b');
+title("Step response fixed-point vs floating point coefficients");
+legend({'Fixed-point','Floating-point'});
 
 %% perform the filter
 yq = filter(Bfixed,Afixed,xq_int);
