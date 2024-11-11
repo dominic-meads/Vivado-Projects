@@ -3,7 +3,8 @@
 module sine_wave_gen_tb;
   reg clk;
   reg signed [15:0] r_din;
-  wire signed [15:0] dout;
+  wire signed [15:0] dout_v;
+  wire signed [15:0] dout_vhd;
 
   always #50 clk = ~clk;  // 10 MHz clk
 
@@ -20,7 +21,13 @@ module sine_wave_gen_tb;
   iir_DF1_Biquad uut (
     .clk(clk),
     .din(r_din),
-    .dout(dout)
+    .dout(dout_v)
+  );
+
+  iir_biquad_df1 vhd (
+    .clk(clk),
+    .din(r_din),
+    .dout(dout_vhd)
   );
   
   initial 
@@ -35,7 +42,7 @@ module sine_wave_gen_tb;
          status = $fscanf(fid,"%d\n",sample); 
          //$display("%d\n",sample);
          r_wave_sample[i] = 16'(sample);
-         $display("%d index is %d\n",i,r_wave_sample[i]);
+         //$display("%d index is %d\n",i,r_wave_sample[i]);
        end
      $fclose(fid);
 
