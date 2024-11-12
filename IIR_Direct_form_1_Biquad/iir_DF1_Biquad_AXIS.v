@@ -28,6 +28,7 @@
 //  
 //        parameter coeff_width  = 16,     // coefficient bit width
 //        parameter inout_width  = 16,     // input and output data wdth
+//        parameter scale_factor = 14,     // multiplying coefficients by 2^14
 //        parameter a1_int_coeff = -31880, // a1 * 2^14
 //        parameter a2_int_coeff = 15531,  // a2 * 2^14
 //        parameter b0_int_coeff = 167,    // g * b0 * 2^14  (multiply denom coeffs by gain for DF1 [source 1])
@@ -48,6 +49,7 @@
 module iir_DF1_Biquad_AXIS #(
   parameter coeff_width  = 16,     // coefficient bit width
   parameter inout_width  = 16,     // input and output data wdth
+  parameter scale_factor = 14,     // multiplying coefficients by 2^14
   parameter a1_int_coeff = -31880,  // integer coefficients
   parameter a2_int_coeff = 15531,
   parameter b0_int_coeff = 167,
@@ -180,7 +182,7 @@ module iir_DF1_Biquad_AXIS #(
                 r_x    <= s_axis_tdata;
                 r_x_z1 <= r_x;
                 r_x_z2 <= r_x_z1;
-                r_y_z1 <= w_sum >>> 14;  // divide by the same 2^14 value the coefficients were multiplied by
+                r_y_z1 <= w_sum >>> scale_factor;  // divide by the same 2^scale_factor value the coefficients were multiplied by
                 r_y_z2 <= r_y_z1;
               end 
           end 
