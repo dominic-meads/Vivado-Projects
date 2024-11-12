@@ -22,6 +22,8 @@ module axi_stream_tb;
   reg signed [15:0] r_wave_sample [num_samples - 1:0];
 
   iir_DF1_Biquad_AXIS #(
+    .coeff_width(16),
+    .inout_width(16),
     .a1_int_coeff(-31880),
     .a2_int_coeff(15531),
     .bo_int_coeff(167),

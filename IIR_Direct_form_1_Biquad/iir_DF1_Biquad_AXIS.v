@@ -10,8 +10,12 @@
 // Target Devices: 7 Series
 // Tool Versions: Vivado 2020.2
 // Description: 
-//      IIR Direct-form I structure BiQuad. Compatible with AXI4 streaming interface with paramaterized 
-//      coefficients in Q1.14 format I think? (coefficients are multiplied by 2^14, example below); 
+//      IIR Direct-form I structure BiQuad. Compatible with AXI4 streaming interface with parameterized 
+//      coefficients. Example is in Q1.14 format I think? (coefficients are multiplied by 2^14, see below) 
+//
+//      IMPORTANT: input/output data width and coefficient width are adjustable in the parameters. Xilinx 7 Series DSP48E1 tile has
+//                 a 25x18 bit multiplier, do not exceed this width in the parameters. E.g. max coeff_width = 25 and max inout width = 18, 
+//                 or vice versa. 
 //
 //      Example: lowpass elliptical filter. Cuttoff frequency of 60 kHz (Fsample = 10 MHz), with 40 dB stopband attenuation and 0.5 dB ripple in the passband
 //        see MATLAB Script here: https://github.com/dominic-meads/Vivado-Projects/blob/main/IIR_Direct_form_1_Biquad/sample_gen.m
@@ -22,6 +26,8 @@
 //                 b0         b1        b2        a0        a1        a2
 //          g = 0.0102 
 //  
+//        parameter coeff_width  = 16,     // coefficient bit width
+//        parameter inout_width  = 16,     // input and output data wdth
 //        parameter a1_int_coeff = -31880, // a1 * 2^14
 //        parameter a2_int_coeff = 15531,  // a2 * 2^14
 //        parameter b0_int_coeff = 167,    // g * b0 * 2^14  (multiply denom coeffs by gain for DF1 [source 1])
@@ -40,6 +46,8 @@
 
 
 module iir_DF1_Biquad_AXIS #(
+  parameter coeff_width  = 16,     // coefficient bit width
+  parameter inout_width  = 16,     // input and output data wdth
   parameter a1_int_coeff = -31880,  // integer coefficients
   parameter a2_int_coeff = 15531,
   parameter b0_int_coeff = 167,
@@ -49,8 +57,8 @@ module iir_DF1_Biquad_AXIS #(
   input  clk,
   input  rst_n,
   input  s_axis_tvalid,
-  input  signed [15:0] s_axis_tdata,
-  output signed [15:0] m_axis_tdata,
+  input  signed [inout_width-1:0] s_axis_tdata,
+  output signed [inout_width-1:0] m_axis_tdata,
   output m_axis_tvalid,
   output m_axis_tready
 );
@@ -59,34 +67,34 @@ module iir_DF1_Biquad_AXIS #(
   // sos = {1.0000   -1.8057    1.0000    1.0000   -1.9459    0.9480}
   //         b0         b1        b2        a0        a1        a2
   //   g = 0.0102 
-  reg signed [15:0] a1_fixed = a1_int_coeff;
-  reg signed [15:0] a2_fixed = a2_int_coeff;
-  reg signed [15:0] b0_fixed = b0_int_coeff;   // g * b0 * 2^14  (multiply denom coeffs by gain for DF1 [source 1])
-  reg signed [15:0] b1_fixed = b1_int_coeff;   // g * b1 * 2^14 
-  reg signed [15:0] b2_fixed = b2_int_coeff;   // g * b2 * 2^14
+  reg signed [coeff_width-1:0] a1_fixed = a1_int_coeff;
+  reg signed [coeff_width-1:0] a2_fixed = a2_int_coeff;
+  reg signed [coeff_width-1:0] b0_fixed = b0_int_coeff;   // g * b0 * 2^14  (multiply denom coeffs by gain for DF1 [source 1])
+  reg signed [coeff_width-1:0] b1_fixed = b1_int_coeff;   // g * b1 * 2^14 
+  reg signed [coeff_width-1:0] b2_fixed = b2_int_coeff;   // g * b2 * 2^14
 
   // input register
-  reg signed [15:0] r_x = 0;
+  reg signed [inout_width-1:0] r_x = 0;
 
   // output registers
   reg r_m_axis_tvalid = 1'b0; 
   reg r_m_axis_tready = 1'b0;
 
   // delay registers
-  reg signed [15:0] r_x_z1 = 0;
-  reg signed [15:0] r_x_z2 = 0;
-  reg signed [15:0] r_y_z1 = 0;
-  reg signed [15:0] r_y_z2 = 0;
+  reg signed [inout_width-1:0] r_x_z1 = 0;
+  reg signed [inout_width-1:0] r_x_z2 = 0;
+  reg signed [inout_width-1:0] r_y_z1 = 0;
+  reg signed [inout_width-1:0] r_y_z2 = 0;
 
   // multiplication wires
-  wire signed [31:0] w_product_a1;
-  wire signed [31:0] w_product_a2;
-  wire signed [31:0] w_product_b0;
-  wire signed [31:0] w_product_b1;
-  wire signed [31:0] w_product_b2;
+  wire signed [inout_width + coeff_width-1:0] w_product_a1;
+  wire signed [inout_width + coeff_width-1:0] w_product_a2;
+  wire signed [inout_width + coeff_width-1:0] w_product_b0;
+  wire signed [inout_width + coeff_width-1:0] w_product_b1;
+  wire signed [inout_width + coeff_width-1:0] w_product_b2;
 
   // acummulate wire
-  wire signed [31:0] w_sum; 
+  wire signed [inout_width + coeff_width-1:0] w_sum; 
 
   // states
   localparam READY = 1'b0;
