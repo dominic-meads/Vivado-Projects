@@ -24,6 +24,7 @@ module axi_stream_tb;
   iir_DF1_Biquad_AXIS #(
     .coeff_width(16),
     .inout_width(16),
+    .scale_factor(14),
     .a1_int_coeff(-31880),
     .a2_int_coeff(15531),
     .bo_int_coeff(167),
