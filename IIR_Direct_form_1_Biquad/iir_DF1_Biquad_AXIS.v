@@ -59,10 +59,11 @@ module iir_DF1_Biquad_AXIS #(
   input  clk,
   input  rst_n,
   input  s_axis_tvalid,
+  input  m_axis_tready,
   input  signed [inout_width-1:0] s_axis_tdata,
   output signed [inout_width-1:0] m_axis_tdata,
   output m_axis_tvalid,
-  output m_axis_tready
+  output s_axis_tready
 );
 
   // filter coefficients (multiplied floating point coefficients by 2^14)
@@ -80,7 +81,8 @@ module iir_DF1_Biquad_AXIS #(
 
   // output registers
   reg r_m_axis_tvalid = 1'b0; 
-  reg r_m_axis_tready = 1'b0;
+  reg r_s_axis_tready = 1'b0;
+  reg signed [inout_width-1:0] r_m_axis_tdata = 0;
 
   // delay registers
   reg signed [inout_width-1:0] r_x_z1 = 0;
@@ -115,7 +117,7 @@ module iir_DF1_Biquad_AXIS #(
       case (r_current_state)
         READY : 
           begin 
-            if (s_axis_tvalid == 1'b1)
+            if (s_axis_tvalid & s_axis_tready) // axis handshake. Incoming data not valid unless BOTH valid and ready are high
               r_next_state <= BUSY;
             else 
               r_next_state <= r_current_state;
@@ -139,19 +141,19 @@ module iir_DF1_Biquad_AXIS #(
       if (r_current_state == READY)
         begin 
           r_m_axis_tvalid <= 1'b0;  // data not valid
-          r_m_axis_tready <= 1'b1;  // set ready signal 
+          r_s_axis_tready <= 1'b1;  // set ready signal 
           r_iir_en        <= 1'b0;  // dont enable iir filter in this state (downstream data not valid yet)
         end 
       else if (r_current_state == BUSY)
         begin 
           r_m_axis_tvalid <= 1'b1;  // data valid
-          r_m_axis_tready <= 1'b0;  // disable ready signal 
+          r_s_axis_tready <= 1'b0;  // disable ready signal 
           r_iir_en        <= 1'b1;  // iir filter enabled (MAC happens in one clock cycle)
         end 
       else 
         begin 
           r_m_axis_tvalid <= 1'b0;  
-          r_m_axis_tready <= 1'b0;  
+          r_s_axis_tready <= 1'b0;  
           r_iir_en        <= 1'b0;      
         end   
     end 
@@ -159,12 +161,25 @@ module iir_DF1_Biquad_AXIS #(
   // state update
   always @ (posedge clk, negedge rst_n)
     begin
-        if (~rst_n)
-            r_current_state <= READY;
-        else 
-            r_current_state <= r_next_state;
-    end 
-
+      if (~rst_n)
+        r_current_state <= READY;
+      else 
+        r_current_state <= r_next_state;
+    end
+    
+  // AXIS handshake to upstream module
+  always @ (posedge clk, negedge rst_n)
+    begin
+      if (~rst_n)
+        r_m_axis_tdata <= 0;
+      else 
+        begin
+          if (m_axis_tready)  // only send data if upstream device is ready
+            r_m_axis_tdata <= r_y_z1;
+        end 
+    end  
+            
+  // iir delay element control
   always @ (posedge clk, negedge rst_n)
     begin
         if (~rst_n)
@@ -199,8 +214,8 @@ module iir_DF1_Biquad_AXIS #(
   assign w_sum = w_product_b0 + w_product_b1 + w_product_b2 + w_product_a1 + w_product_a2;
 
   // output assignments
-  assign m_axis_tdata  = r_y_z1;
+  assign m_axis_tdata  = r_m_axis_tdata;
   assign m_axis_tvalid = r_m_axis_tvalid;
-  assign m_axis_tready = r_m_axis_tready;
+  assign s_axis_tready = r_s_axis_tready;
 
 endmodule

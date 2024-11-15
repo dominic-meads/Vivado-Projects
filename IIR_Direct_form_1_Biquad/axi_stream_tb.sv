@@ -5,6 +5,7 @@ module axi_stream_tb;
   reg signed [15:0] r_s_axis_tdata;
   reg rst_n; 
   reg r_s_axis_tvalid;
+  reg r_m_axis_tready;  // upstream device ready
   wire signed [15:0] m_axis_tdata;
   wire m_axis_tvalid;
   wire m_axis_tready;
@@ -35,18 +36,31 @@ module axi_stream_tb;
     .rst_n(rst_n),
     .s_axis_tvalid(r_s_axis_tvalid),
     .s_axis_tdata(r_s_axis_tdata),
+    .m_axis_tready(r_m_axis_tready),
     .m_axis_tdata(m_axis_tdata),
     .m_axis_tvalid(m_axis_tvalid),
-    .m_axis_tready(m_axis_tready)
+    .s_axis_tready(s_axis_tready)
   );
 
+  // random upstream device tready deassertion
+  // output should just stall while module internals continue. 
+  // output will update with current output data when the ready is back high, since there is no fifo buffer to hold past unread axi data
+  initial
+    begin
+      r_m_axis_tready = 1'b1; // upstream device ready
+      #4630
+      r_m_axis_tready = 1'b0;  // after some random time, upstream device is not ready
+      #5570
+      r_m_axis_tready = 1'b1;  // upstream device becomes ready again. 
+    end 
+         
   initial 
     begin
     clk = 1'b0;
     rst_n = 1'b0; 
     r_s_axis_tdata = 0;
     r_s_axis_tvalid = 1'b0; 
-
+    
     // load samples into register
     fid = $fopen("50kHz_sine_wave_with_noise.txt","r");
     for (i = 0; i < num_samples; i = i + 1)
@@ -60,7 +74,7 @@ module axi_stream_tb;
     
     #1000
     rst_n = 1'b1; // release reset
-
+    
     repeat(num_samples)  // 10 MHz sampling
       begin 
         #80
