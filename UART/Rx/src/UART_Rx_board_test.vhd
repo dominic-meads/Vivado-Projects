@@ -1,4 +1,4 @@
--- UART Receiver test
+-- UART Receiver board test. 
 --
 -- If received data is ASCII character 'A', then LED lights up green
 --
